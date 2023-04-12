@@ -4,8 +4,9 @@ import Safe, { SafeFactory, SafeAccountConfig, ContractNetworksConfig, SafeTrans
 import SafeServiceClient from '@safe-global/safe-service-client'
 import { SafeTransactionDataPartial } from '@safe-global/safe-core-sdk-types'
 import { abi as module_abi } from './abi/WhitelistingModuleV2.json'
+import daiABI from './abi/DAIabi.json'
 require("dotenv").config();
-const { ALCHEMY_OP, WALLET_ADDRESS, WALLET_SECRET, SAFE_ADDRESS, MODULE_ADDRESS } = process.env;
+const { ALCHEMY_OP, WALLET_ADDRESS, WALLET_SECRET, SAFE_ADDRESS, MODULE_ADDRESS, DAI_ADDRESS, CONTRACT_ADDRESS, VELO_ROUTER_ADDRESS, soDAI_ADDRESS } = process.env;
 
 const web3Provider = new ethers.providers.StaticJsonRpcProvider(ALCHEMY_OP)
 // const web3Provider = new ethers.providers.StaticJsonRpcProvider('http://127.0.0.1:8545/')
@@ -49,6 +50,58 @@ async function safeSetup(){
                 let nextNonce = await safeService.getNextNonce(SAFE_ADDRESS)
                 let safeTransactionData: SafeTransactionDataPartial = {
                     to: MODULE_ADDRESS,
+                    value: '0',
+                    data: data,
+                    nonce: nextNonce
+                }
+                safeTransaction = await safeSdk.createTransaction({ safeTransactionData })
+                txHash = await safeSdk.getTransactionHash(safeTransaction)
+                signature = await safeSdk.signTransactionHash(txHash)
+                safeTransaction.addSignature(signature)
+                await safeService.proposeTransaction({
+                    safeAddress: SAFE_ADDRESS,
+                    /// @ts-ignore
+                    senderAddress: WALLET_ADDRESS,
+                    safeTransactionData: safeTransaction.data,
+                    safeTxHash: txHash,
+                    senderSignature: signature.data
+                });
+
+                //approves
+                const erc20iface = new ethers.utils.Interface(daiABI)
+                data = erc20iface.encodeFunctionData('approve',
+                [  CONTRACT_ADDRESS,
+                    ethers.constants.MaxUint256,
+                ])
+                nextNonce = await safeService.getNextNonce(SAFE_ADDRESS)
+                safeTransactionData = {
+                    /// @ts-ignore
+                    to: DAI_ADDRESS,
+                    value: '0',
+                    data: data,
+                    nonce: nextNonce
+                }
+                safeTransaction = await safeSdk.createTransaction({ safeTransactionData })
+                txHash = await safeSdk.getTransactionHash(safeTransaction)
+                signature = await safeSdk.signTransactionHash(txHash)
+                safeTransaction.addSignature(signature)
+                await safeService.proposeTransaction({
+                    safeAddress: SAFE_ADDRESS,
+                    /// @ts-ignore
+                    senderAddress: WALLET_ADDRESS,
+                    safeTransactionData: safeTransaction.data,
+                    safeTxHash: txHash,
+                    senderSignature: signature.data
+                });
+
+                data = erc20iface.encodeFunctionData('approve',
+                [  VELO_ROUTER_ADDRESS,
+                    ethers.constants.MaxUint256,
+                ])
+                nextNonce = await safeService.getNextNonce(SAFE_ADDRESS)
+                safeTransactionData = {
+                    /// @ts-ignore
+                    to: DAI_ADDRESS,
                     value: '0',
                     data: data,
                     nonce: nextNonce

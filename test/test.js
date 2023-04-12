@@ -22,10 +22,12 @@ describe("sonne position manager", function () {
     const veloTokenAddress = '0x3c8B650257cFb5f272f799F5e2b4e65093a11a05';
     const SONNEaddress = '0x1DB2466d9F5e10D7090E7152B68d62703a2245F0';
     const unitrollerAddress = '0x60CF091cD3f50420d50fD7f707414d0DF4751C58';
+    const DAIaddress = '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1';
     const WETHaddress = '0x4200000000000000000000000000000000000006';
-    const soWETHaddress = '0xf7B5965f5C117Eb1B5450187c9DcFccc3C317e8E';
+    const soDAIaddress = '0x5569b83de187375d43FBd747598bfe64fC8f6436';
     const WETHabi = require('../abi/wETHabi.json');
     const soWETHabi = require('../abi/sowETHabi.json');
+    const DAIabi = require('../abi/DAIabi.json');
 
     const [owner, otherAccount] = await ethers.getSigners();
 
@@ -40,11 +42,27 @@ describe("sonne position manager", function () {
 
     // get some WETH to supply
     const WETH = new ethers.Contract(WETHaddress, WETHabi);
-    await WETH.connect(owner).deposit({ value: ethers.utils.parseEther('10')});
+    await WETH.connect(owner).deposit({ value: ethers.utils.parseEther('10') });
+    const DAI = new ethers.Contract(DAIaddress, DAIabi);
 
-    const soWETH = new ethers.Contract(soWETHaddress, soWETHabi);
+    const abi = require('../abi/veloRouter.json');
+    const router = new ethers.Contract(veloRouterAddress, abi);
+    const routes = [{ 
+      from: WETH.address,
+      to: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
+      stable: false
+    },
+    { 
+      from: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
+      to: DAIaddress,
+      stable: true
+    }]
+    await WETH.connect(owner).approve(router.address, ethers.utils.parseEther('1').toString());
+    await router.connect(owner).swapExactTokensForTokens(ethers.utils.parseEther('1').toString(), 0, routes, owner.address, Math.floor(Date.now() / 1000) + 60, { gasLimit: ethers.BigNumber.from('20000000') } );
 
-    return { contract, WETHaddress, WETH, soWETHaddress, soWETH, owner, otherAccount, veloRouterAddress, SONNEaddress, veloTokenAddress };
+    const soDAI = new ethers.Contract(soDAIaddress, soWETHabi);
+
+    return { contract, DAIaddress, DAI, soDAIaddress, soDAI, owner, otherAccount, veloRouterAddress, SONNEaddress, veloTokenAddress };
   }
 
   describe("base functions", function () {
@@ -58,37 +76,37 @@ describe("sonne position manager", function () {
     // });
     describe("not revert validations", function () {
       it("list token", async function () {
-        const { contract, WETH, soWETH, owner, otherAccount } = await loadFixture(deployManagerFixture);
+        const { contract, DAI, soDAI, owner, otherAccount } = await loadFixture(deployManagerFixture);
 
-        await expect(await contract.connect(owner).listSoToken(WETH.address, soWETH.address)).not.to.be.reverted;
+        await expect(await contract.connect(owner).listSoToken(DAI.address, soDAI.address)).not.to.be.reverted;
       });
 
       it("open position", async function () {
-        const { contract, WETH, soWETH, owner, otherAccount } = await loadFixture(deployManagerFixture);
+        const { contract, DAI, soDAI, owner, otherAccount } = await loadFixture(deployManagerFixture);
 
-        await contract.connect(owner).listSoToken(WETH.address, soWETH.address);
-        await WETH.connect(owner).approve(contract.address, ethers.utils.parseEther('1').toString());
+        await contract.connect(owner).listSoToken(DAI.address, soDAI.address);
+        await DAI.connect(owner).approve(contract.address, ethers.utils.parseEther('1').toString());
         
-        await expect(await contract.openPosition(ethers.utils.parseEther('1').toString(), 5, ethers.BigNumber.from('749990000000000000'), WETH.address))
+        await expect(await contract.openPosition(ethers.utils.parseEther('1').toString(), 5, ethers.BigNumber.from('749990000000000000'), DAI.address, soDAI.address))
         .not.to.be.reverted;
       });
 
       it("reinvesting", async function () {
-        const { contract, WETH, soWETH, owner, otherAccount, veloRouterAddress, SONNEaddress, veloTokenAddress } = await loadFixture(deployManagerFixture);
+        const { contract, DAI, soDAI, owner, otherAccount, veloRouterAddress, SONNEaddress, veloTokenAddress } = await loadFixture(deployManagerFixture);
 
         const abi = require('../abi/veloRouter.json');
         const router = new ethers.Contract(veloRouterAddress, abi);
 
-        await contract.connect(owner).listSoToken(WETH.address, soWETH.address);
-        await WETH.connect(owner).approve(contract.address, ethers.utils.parseEther('1').toString());
-        await WETH.connect(owner).approve(soWETH.address, ethers.utils.parseEther('1').toString());
-        await contract.connect(owner).openPosition(ethers.utils.parseEther('1').toString(), 5, ethers.BigNumber.from('749990000000000000'), WETH.address);
+        await contract.connect(owner).listSoToken(DAI.address, soDAI.address);
+        await DAI.connect(owner).approve(contract.address, ethers.utils.parseEther('1').toString());
+        await DAI.connect(owner).approve(soDAI.address, ethers.utils.parseEther('1').toString());
+        await contract.connect(owner).openPosition(ethers.utils.parseEther('1').toString(), 5, ethers.BigNumber.from('749990000000000000'), DAI.address, soDAI.address);
 
-        await WETH.connect(owner).approve(router.address, ethers.utils.parseEther('1').toString());
+        await DAI.connect(owner).approve(router.address, ethers.utils.parseEther('1').toString());
         const routes = [{ 
-                  from: WETH.address,
+                  from: DAI.address,
                   to: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
-                  stable: false
+                  stable: true
                 },
                 { 
                   from: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
@@ -105,10 +123,31 @@ describe("sonne position manager", function () {
         // console.log(balance);
         // console.log(await soWETH.connect(owner).callStatic.borrowBalanceCurrent(contract.address));
 
+        // console.log("Gas: ", await contract.connect(owner).estimateGas.claimAndReinvest(
+        //   soDAI.address,
+        //   5,
+        //   ethers.BigNumber.from('890000000000000000'),
+        //   false, 
+        //   false,
+        //   0,
+        //   [
+        //     { 
+        //       from: SONNEaddress,
+        //       to: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
+        //       stable: false
+        //     }, 
+        //     { 
+        //       from: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
+        //       to: DAI.address,
+        //       stable: true
+        //     }
+        //   ],
+        //   Math.floor(Date.now() / 1000) + 60
+        // ));
         await expect(await contract.connect(owner).claimAndReinvest(
-              soWETH.address,
+              soDAI.address,
               5,
-              ethers.BigNumber.from('749990000000000000'),
+              ethers.BigNumber.from('890000000000000000'),
               false, 
               false,
               0,
@@ -120,8 +159,8 @@ describe("sonne position manager", function () {
                 }, 
                 { 
                   from: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
-                  to: WETH.address,
-                  stable: false
+                  to: DAI.address,
+                  stable: true
                 }
               ],
               Math.floor(Date.now() / 1000) + 60
@@ -129,26 +168,28 @@ describe("sonne position manager", function () {
       });
 
       it("close the position", async function () {
-        const { contract, WETH, soWETH, owner, otherAccount } = await loadFixture(deployManagerFixture);
+        const { contract, DAI, soDAI, owner, otherAccount } = await loadFixture(deployManagerFixture);
 
-        await contract.connect(owner).listSoToken(WETH.address, soWETH.address);
-        await WETH.connect(owner).approve(contract.address, ethers.utils.parseEther('1').toString());
-        await contract.connect(owner).openPosition(ethers.utils.parseEther('1').toString(), 5, ethers.BigNumber.from('749990000000000000'), WETH.address);
+        await contract.connect(owner).listSoToken(DAI.address, soDAI.address);
+        await DAI.connect(owner).approve(contract.address, ethers.utils.parseEther('1').toString());
+        await contract.connect(owner).openPosition(ethers.utils.parseEther('1').toString(), 22, ethers.BigNumber.from('899999999000000000'), DAI.address, soDAI.address);
+        // res = await soDAI.connect(owner).getAccountSnapshot(contract.address);
+        // console.log( res[2] / res[1].mul(res[3]) * 1e18 );
         // console.log(await soWETH.connect(owner).callStatic.borrowBalanceCurrent(contract.address));
 
-        await expect(await contract.connect(owner).closePosition(WETH.address, ethers.BigNumber.from('750000000000000000'), { gasLimit: ethers.BigNumber.from('20000000') } )).not.to.be.reverted;
+        await expect(await contract.connect(owner).closePosition(soDAI.address, ethers.BigNumber.from('900000000000000000'), { gasLimit: ethers.BigNumber.from('20000000') } )).not.to.be.reverted;
       });
 
       it("withdraw", async function () {
-        const { contract, WETH, soWETH, owner, otherAccount } = await loadFixture(deployManagerFixture);
+        const { contract, DAI, soDAI, owner, otherAccount } = await loadFixture(deployManagerFixture);
 
-        await contract.connect(owner).listSoToken(WETH.address, soWETH.address);
-        await WETH.connect(owner).approve(contract.address, ethers.utils.parseEther('1').toString());
-        await contract.connect(owner).openPosition(ethers.utils.parseEther('1').toString(), 5, ethers.BigNumber.from('749990000000000000'), WETH.address);
-        // console.log(await soWETH.connect(owner).callStatic.borrowBalanceCurrent(contract.address));
-        await contract.connect(owner).closePosition(WETH.address, ethers.BigNumber.from('750000000000000000'), { gasLimit: ethers.BigNumber.from('20000000') } )
+        await contract.connect(owner).listSoToken(DAI.address, soDAI.address);
+        await DAI.connect(owner).approve(contract.address, ethers.utils.parseEther('1').toString());
+        await contract.connect(owner).openPosition(ethers.utils.parseEther('1').toString(), 5, ethers.BigNumber.from('890000000000000000'), DAI.address, soDAI.address);
+        // console.log(await soDAI.connect(owner).callStatic.borrowBalanceCurrent(contract.address));
+        await contract.connect(owner).closePosition(soDAI.address, ethers.BigNumber.from('900000000000000000'), { gasLimit: ethers.BigNumber.from('20000000') } )
 
-        await expect(await contract.connect(owner).returnERC20(WETH.address)).not.to.be.reverted;
+        await expect(await contract.connect(owner).returnERC20(DAI.address)).not.to.be.reverted;
       });
     });
   });

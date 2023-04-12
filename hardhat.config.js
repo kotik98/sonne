@@ -1,5 +1,6 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("@nomicfoundation/hardhat-chai-matchers");
+require("hardhat-gas-reporter");
 require("dotenv").config();
 
 const { ALCHEMY_OP, WALLET_SECRET } = process.env;
@@ -33,4 +34,13 @@ module.exports = {
   // etherscan: {
   //   apiKey: 'https://optimistic.etherscan.io/'
   // },
+  gasReporter: {
+    enabled:  true,
+    // gasPrice: 1,
+    showTimeSpent: true,
+    showMethodSig: true,
+    onlyCalledMethods: false,
+    currency: 'USD',
+    coinmarketcap: 'd8f6f86a-4110-4191-ab5a-6b3708ca3504',
+    },
 };

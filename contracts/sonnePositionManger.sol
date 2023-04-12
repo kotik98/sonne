@@ -9,13 +9,10 @@ import './IveloRouter.sol';
 import './Iunitroller.sol';
 
 contract sonnePositionManager is Ownable {
-  mapping (address=>address) erc20toSoToken;
-  mapping (address=>IERC20) token;
-  mapping (address=>IsoToken) soToken;
   address SONNEaddress;
-  Icomptroller comptroller;
-  IveloRouter veloRouter;
-  Iunitroller unitroller;
+  address comptroller;
+  address veloRouter;
+  address unitroller;
 
   constructor(
     address comptrollerAddress,
@@ -23,34 +20,33 @@ contract sonnePositionManager is Ownable {
     address unitrollerAddress,
     address SONNE
   ) {
-    comptroller = Icomptroller(comptrollerAddress);
-    veloRouter = IveloRouter(veloRouterAddress);
-    unitroller = Iunitroller(unitrollerAddress);
+    comptroller = comptrollerAddress;
+    veloRouter = veloRouterAddress;
+    unitroller = unitrollerAddress;
     SONNEaddress = SONNE;
   }
 
-  function listSoToken(address erc20Address, address soTokenAddress) external onlyOwner {
-    erc20toSoToken[erc20Address] = soTokenAddress;
-    token[erc20Address] = IERC20(erc20Address);
-    token[erc20Address].approve(erc20toSoToken[erc20Address], 2**256 - 1);
-    soToken[soTokenAddress] = IsoToken(soTokenAddress);
-    address[] memory cTokens = new address[](1);
-    cTokens[0] = soTokenAddress; 
-    comptroller.enterMarkets(cTokens);
+  function updateAddresses(address comptrollerAddress, address veloRouterAddress, address unitrollerAddress, address SONNE) external onlyOwner {
+    comptroller = comptrollerAddress;
+    veloRouter = veloRouterAddress;
+    unitroller = unitrollerAddress;
+    SONNEaddress = SONNE;
   }
 
-  function openPosition(uint initialAmount, uint8 leverage, uint collateralFactorNumeratorXe18, address erc20address) external onlyOwner {
-    require(address(token[erc20address]) != address(0), 'token not listed');
-    IERC20 _token = token[erc20address];
-    address soTokenAddress = erc20toSoToken[erc20address];
-    // get tokens from sender
-    _token.transferFrom(msg.sender, address(this), initialAmount);
+  function listSoToken(address erc20address, address soTokenAddress) external onlyOwner {
+    IERC20(erc20address).approve(soTokenAddress, 2**256 - 1);
+    address[] memory cTokens = new address[](1);
+    cTokens[0] = soTokenAddress; 
+    Icomptroller(comptroller).enterMarkets(cTokens);
+  }
 
+  function openPosition(uint initialAmount, uint8 leverage, uint collateralFactorNumeratorXe18, address erc20address, address soTokenAddress) external onlyOwner {
+    IERC20(erc20address).transferFrom(msg.sender, address(this), initialAmount);
     _supplyAndBorrow(initialAmount, leverage, collateralFactorNumeratorXe18, soTokenAddress);
   }
 
   function _supplyAndBorrow(uint collateralAmount, uint leverage, uint collateralFactorNumeratorXe18, address soTokenAddress) internal {
-    IsoToken _soToken = soToken[soTokenAddress];
+    IsoToken _soToken = IsoToken(soTokenAddress);
     uint nextCollateralAmount = collateralAmount;
     for(uint8 i = 0; i < leverage; i++) {
       _soToken.mint(nextCollateralAmount);
@@ -62,10 +58,8 @@ contract sonnePositionManager is Ownable {
     _soToken.mint(nextCollateralAmount);
   }
 
-  function closePosition(address erc20address, uint collateralFactorNumeratorXe18) external onlyOwner {
-    address soTokenAddress = erc20toSoToken[erc20address];
-    IsoToken _soToken = soToken[soTokenAddress];
-
+  function closePosition(address soTokenAddress, uint collateralFactorNumeratorXe18) external onlyOwner {
+    IsoToken _soToken = IsoToken(soTokenAddress);
     uint err;
     uint supply;
     uint borrowBalance;
@@ -75,6 +69,7 @@ contract sonnePositionManager is Ownable {
     uint supplyBalance = mantissa * supply / 1e18;
     uint redeemAmount;
     uint repayAmount;
+
     while (borrowBalance > 0){
       redeemAmount = supplyBalance * collateralFactorNumeratorXe18 / 1e18 - borrowBalance;
       _soToken.redeemUnderlying(redeemAmount);
@@ -95,17 +90,17 @@ contract sonnePositionManager is Ownable {
   }
 
   function claimAndReinvest(address soTokenAddress, uint8 leverage, uint collateralFactorNumeratorXe18, bool isSimpleSwap, bool isStable, uint amountOutMin, IveloRouter.route[] memory routes, uint deadline) external onlyOwner {
-    IsoToken _soToken = soToken[soTokenAddress];
     CToken[] memory cTokens = new CToken[](1);
     cTokens[0] = CToken(soTokenAddress); 
-    unitroller.claimComp(address(this), cTokens);
+    Iunitroller(unitroller).claimComp(address(this), cTokens);
     uint sonneBalance = IERC20(SONNEaddress).balanceOf(address(this));
     IERC20(SONNEaddress).approve(address(veloRouter), sonneBalance);
     uint[] memory amounts;
+
     if (isSimpleSwap == true) {
-      amounts = veloRouter.swapExactTokensForTokensSimple(sonneBalance, amountOutMin, SONNEaddress, _soToken.underlying(), isStable, address(this), deadline);
+      amounts = IveloRouter(veloRouter).swapExactTokensForTokensSimple(sonneBalance, amountOutMin, SONNEaddress, IsoToken(soTokenAddress).underlying(), isStable, address(this), deadline);
     } else {
-      amounts = veloRouter.swapExactTokensForTokens(sonneBalance, amountOutMin, routes, address(this), deadline);
+      amounts = IveloRouter(veloRouter).swapExactTokensForTokens(sonneBalance, amountOutMin, routes, address(this), deadline);
     }
 
     _supplyAndBorrow(amounts[amounts.length - 1], leverage, collateralFactorNumeratorXe18, soTokenAddress);
