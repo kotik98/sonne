@@ -5,6 +5,7 @@ import SafeServiceClient from '@safe-global/safe-service-client'
 import { SafeTransactionDataPartial } from '@safe-global/safe-core-sdk-types'
 import { abi as module_abi } from './abi/WhitelistingModuleV2.json'
 import daiABI from './abi/DAIabi.json'
+import posManagerABI from './abi/sonnePositionManager.json'
 require("dotenv").config();
 const { ALCHEMY_OP, WALLET_ADDRESS, WALLET_SECRET, SAFE_ADDRESS, MODULE_ADDRESS, DAI_ADDRESS, CONTRACT_ADDRESS, VELO_ROUTER_ADDRESS, soDAI_ADDRESS } = process.env;
 
@@ -70,7 +71,8 @@ async function safeSetup(){
                 //approves
                 const erc20iface = new ethers.utils.Interface(daiABI)
                 data = erc20iface.encodeFunctionData('approve',
-                [  CONTRACT_ADDRESS,
+                [ 
+                    CONTRACT_ADDRESS,
                     ethers.constants.MaxUint256,
                 ])
                 nextNonce = await safeService.getNextNonce(SAFE_ADDRESS)
@@ -93,9 +95,11 @@ async function safeSetup(){
                     safeTxHash: txHash,
                     senderSignature: signature.data
                 });
+
 
                 data = erc20iface.encodeFunctionData('approve',
-                [  VELO_ROUTER_ADDRESS,
+                [  
+                    soDAI_ADDRESS,
                     ethers.constants.MaxUint256,
                 ])
                 nextNonce = await safeService.getNextNonce(SAFE_ADDRESS)
@@ -120,6 +124,162 @@ async function safeSetup(){
                 });
 
 
+                // list token
+                const contractIface = new ethers.utils.Interface(posManagerABI.abi)
+                data = contractIface.encodeFunctionData('listSoToken', [ DAI_ADDRESS, soDAI_ADDRESS ])
+                nextNonce = await safeService.getNextNonce(SAFE_ADDRESS)
+                safeTransactionData = {
+                    to: MODULE_ADDRESS,
+                    value: '0',
+                    data: data,
+                    nonce: nextNonce
+                }
+                safeTransaction = await safeSdk.createTransaction({ safeTransactionData })
+                txHash = await safeSdk.getTransactionHash(safeTransaction)
+                signature = await safeSdk.signTransactionHash(txHash)
+                safeTransaction.addSignature(signature)
+                await safeService.proposeTransaction({
+                    safeAddress: SAFE_ADDRESS,
+                    /// @ts-ignore
+                    senderAddress: WALLET_ADDRESS,
+                    safeTransactionData: safeTransaction.data,
+                    safeTxHash: txHash,
+                    senderSignature: signature.data
+                });
+
+
+                // allowances:
+                // open position
+                data = iface.encodeFunctionData('addNewAllowance',
+                [  CONTRACT_ADDRESS,
+                   '0x84fbfc5b',
+                   {
+                       offset: 4 + 12 + 3 * 32,
+                       dataLength: 164,
+                       args: [
+                           DAI_ADDRESS
+                       ]
+                   }
+                ])
+                nextNonce = await safeService.getNextNonce(SAFE_ADDRESS)
+                safeTransactionData = {
+                    to: MODULE_ADDRESS,
+                    value: '0',
+                    data: data,
+                    nonce: nextNonce
+                }
+                safeTransaction = await safeSdk.createTransaction({ safeTransactionData })
+                txHash = await safeSdk.getTransactionHash(safeTransaction)
+                signature = await safeSdk.signTransactionHash(txHash)
+                safeTransaction.addSignature(signature)
+                await safeService.proposeTransaction({
+                    safeAddress: SAFE_ADDRESS,
+                    /// @ts-ignore
+                    senderAddress: WALLET_ADDRESS,
+                    safeTransactionData: safeTransaction.data,
+                    safeTxHash: txHash,
+                    senderSignature: signature.data
+                });
+
+
+                // reinvest
+                data = iface.encodeFunctionData('addNewAllowance',
+                [  CONTRACT_ADDRESS,
+                   '0x6d49329c',
+                   {
+                       offset: 4 + 12,
+                       dataLength: 484,
+                       args: [
+                           soDAI_ADDRESS
+                       ]
+                   }
+                ])
+                nextNonce = await safeService.getNextNonce(SAFE_ADDRESS)
+                safeTransactionData = {
+                    to: MODULE_ADDRESS,
+                    value: '0',
+                    data: data,
+                    nonce: nextNonce
+                }
+                safeTransaction = await safeSdk.createTransaction({ safeTransactionData })
+                txHash = await safeSdk.getTransactionHash(safeTransaction)
+                signature = await safeSdk.signTransactionHash(txHash)
+                safeTransaction.addSignature(signature)
+                await safeService.proposeTransaction({
+                    safeAddress: SAFE_ADDRESS,
+                    /// @ts-ignore
+                    senderAddress: WALLET_ADDRESS,
+                    safeTransactionData: safeTransaction.data,
+                    safeTxHash: txHash,
+                    senderSignature: signature.data
+                });
+
+
+                // close position
+                data = iface.encodeFunctionData('addNewAllowance',
+                [  CONTRACT_ADDRESS,
+                   '0x742fe1f8',
+                   {
+                       offset: 4 + 12,
+                       dataLength: 68,
+                       args: [
+                           soDAI_ADDRESS
+                       ]
+                   }
+                ])
+                nextNonce = await safeService.getNextNonce(SAFE_ADDRESS)
+                safeTransactionData = {
+                    to: MODULE_ADDRESS,
+                    value: '0',
+                    data: data,
+                    nonce: nextNonce
+                }
+                safeTransaction = await safeSdk.createTransaction({ safeTransactionData })
+                txHash = await safeSdk.getTransactionHash(safeTransaction)
+                signature = await safeSdk.signTransactionHash(txHash)
+                safeTransaction.addSignature(signature)
+                await safeService.proposeTransaction({
+                    safeAddress: SAFE_ADDRESS,
+                    /// @ts-ignore
+                    senderAddress: WALLET_ADDRESS,
+                    safeTransactionData: safeTransaction.data,
+                    safeTxHash: txHash,
+                    senderSignature: signature.data
+                });
+
+
+                // returnERC20
+                data = iface.encodeFunctionData('addNewAllowance',
+                [  CONTRACT_ADDRESS,
+                   '0xc7293668',
+                   {
+                       offset: 4 + 12,
+                       dataLength: 36,
+                       args: [
+                           DAI_ADDRESS,
+                           soDAI_ADDRESS
+                       ]
+                   }
+                ])
+                nextNonce = await safeService.getNextNonce(SAFE_ADDRESS)
+                safeTransactionData = {
+                    to: MODULE_ADDRESS,
+                    value: '0',
+                    data: data,
+                    nonce: nextNonce
+                }
+                safeTransaction = await safeSdk.createTransaction({ safeTransactionData })
+                txHash = await safeSdk.getTransactionHash(safeTransaction)
+                signature = await safeSdk.signTransactionHash(txHash)
+                safeTransaction.addSignature(signature)
+                await safeService.proposeTransaction({
+                    safeAddress: SAFE_ADDRESS,
+                    /// @ts-ignore
+                    senderAddress: WALLET_ADDRESS,
+                    safeTransactionData: safeTransaction.data,
+                    safeTxHash: txHash,
+                    senderSignature: signature.data
+                });
             }
         }
 

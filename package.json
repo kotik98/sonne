@@ -12,6 +12,7 @@
     "@safe-global/safe-core-sdk-types": "^1.9.0",
     "@safe-global/safe-ethers-lib": "^1.9.2",
     "@safe-global/safe-service-client": "^2.0.0",
-    "dotenv": "^16.0.3"
+    "dotenv": "^16.0.3",
+    "google-spreadsheet": "^3.3.0"
   }
 }
