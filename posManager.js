@@ -111,7 +111,7 @@ async function run(args){
     }
     
     while(true){
-        await timer(5 * 1000);
+        await timer(60 * 60 * 24 * 1000);
 
         if (Date.now() > Number(nextDate)){
             await reinvest(soDAI_ADDRESS, reinvestLeverage, collateralFactorNumeratorXe18);
