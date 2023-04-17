@@ -86,21 +86,18 @@ async function run(args){
     if (Number(nextDate) == 0){
         let balance = await DAI.balanceOf(WALLET_ADDRESS);
         await openPosition(balance, leverage, collateralFactorNumeratorXe18, DAI_ADDRESS, soDAI_ADDRESS);
+        
         nextDate = (Date.now() + reinvestingDelta * 24 * 60 * 60 * 1000).toString();
         fs.writeFileSync('reinvest.txt', nextDate);
-
-        SONNEPrice = (await router.getAmountOut('1000000000000000000', SONNE_ADDRESS, USDC_ADDRESS)).amount / 1e6;
-        tokenBalance = await DAI.balanceOf(CONTRACT_ADDRESS) / 1e18;
-        SONNEBalance = await unitroller.callStatic.claimComp(CONTRACT_ADDRESS, [ soDAI_ADDRESS ]) / 1e18;
-        sumbalance = tokenBalance + SONNEBalance * SONNEPrice;
-
-        await sheet.addRow({ UnixTime: Date(Date.now()), tokenBalance: tokenBalance.toFixed(3), SONNEBalance: SONNEBalance.toFixed(3), SONNEPrice: SONNEPrice.toFixed(6), sumbalance: sumbalance.toFixed(3) })
     }
     else if (Number(nextDate) < Date.now()){
         await reinvest(soDAI_ADDRESS, reinvestLeverage, collateralFactorNumeratorXe18);
 
         nextDate = (Date.now() + reinvestingDelta * 24 * 60 * 60 * 1000).toString();
         fs.writeFileSync('reinvest.txt', nextDate);
+    }
+    
+    while(true){
 
         SONNEPrice = (await router.getAmountOut('1000000000000000000', SONNE_ADDRESS, USDC_ADDRESS)).amount / 1e6;
         tokenBalance = await DAI.balanceOf(CONTRACT_ADDRESS) / 1e18;
@@ -108,10 +105,6 @@ async function run(args){
         sumbalance = tokenBalance + SONNEBalance * SONNEPrice;
 
         await sheet.addRow({ UnixTime: Date(Date.now()), tokenBalance: tokenBalance.toFixed(3), SONNEBalance: SONNEBalance.toFixed(3), SONNEPrice: SONNEPrice.toFixed(6), sumbalance: sumbalance.toFixed(3) })
-    }
-    
-    while(true){
-        await timer(60 * 60 * 24 * 1000);
 
         if (Date.now() > Number(nextDate)){
             await reinvest(soDAI_ADDRESS, reinvestLeverage, collateralFactorNumeratorXe18);
@@ -121,13 +114,7 @@ async function run(args){
 
         }
 
-        SONNEPrice = (await router.getAmountOut('1000000000000000000', SONNE_ADDRESS, USDC_ADDRESS)).amount / 1e6;
-        tokenBalance = await DAI.balanceOf(CONTRACT_ADDRESS) / 1e18;
-        SONNEBalance = await unitroller.callStatic.claimComp(CONTRACT_ADDRESS, [ soDAI_ADDRESS ]) / 1e18;
-        sumbalance = tokenBalance + SONNEBalance * SONNEPrice;
-
-        await sheet.addRow({ UnixTime: Date(Date.now()), tokenBalance: tokenBalance.toFixed(3), SONNEBalance: SONNEBalance.toFixed(3), SONNEPrice: SONNEPrice.toFixed(6), sumbalance: sumbalance.toFixed(3) })
-
+        await timer(60 * 60 * 24 * 1000);
     }
 }
 
