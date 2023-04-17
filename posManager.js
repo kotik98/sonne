@@ -81,17 +81,21 @@ async function run(args){
     const unitroller = new ethers.Contract(UNITROLLER_ADDRESS, comptrollerABI, web3Provider);
     const router = new ethers.Contract(VELO_ROUTER_ADDRESS, abi, web3Provider);
     
+
     let nextDate = fs.readFileSync('reinvest.txt', 'utf8');
     if (Number(nextDate) == 0){
         let balance = await DAI.balanceOf(WALLET_ADDRESS);
         await openPosition(balance, leverage, collateralFactorNumeratorXe18, DAI_ADDRESS, soDAI_ADDRESS);
+
+        nextDate = (Date.now() + reinvestingDelta * 24 * 60 * 60 * 1000).toString();
+        fs.writeFileSync('reinvest.txt', nextDate);
     }
     else if (Number(nextDate) < Date.now()){
         await reinvest(soDAI_ADDRESS, reinvestLeverage, collateralFactorNumeratorXe18);
-    }
 
-    nextDate = (Date.now() + reinvestingDelta * 24 * 60 * 60 * 1000).toString();
-    fs.writeFileSync('reinvest.txt', nextDate);
+        nextDate = (Date.now() + reinvestingDelta * 24 * 60 * 60 * 1000).toString();
+        fs.writeFileSync('reinvest.txt', nextDate);
+    }
     
     while(true){
 
