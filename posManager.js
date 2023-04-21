@@ -1,7 +1,7 @@
 const { ethers, BigNumber } = require('ethers');
 const fs = require("fs");
 require("dotenv").config();
-const { ALCHEMY_OP, WALLET_ADDRESS, WALLET_SECRET, CONTRACT_ADDRESS, SONNE_ADDRESS, USDC_ADDRESS, DAI_ADDRESS, UNITROLLER_ADDRESS, VELO_ROUTER_ADDRESS, COMPTROLLER_ADDRESS, soDAI_ADDRESS, MODULE_ADDRESS } = process.env;
+const { ALCHEMY_OP, WALLET_ADDRESS, WALLET_SECRET, CONTRACT_ADDRESS, SONNE_ADDRESS, USDC_ADDRESS, DAI_ADDRESS, UNITROLLER_ADDRESS, VELO_ROUTER_ADDRESS, COMPTROLLER_ADDRESS, soDAI_ADDRESS, MODULE_ADDRESS, SAFE_ADDRESS } = process.env;
 const sonnePosManager = require('./artifacts/contracts/sonnePositionManger.sol/sonnePositionManager.json');
 const WETHabi = require('./abi/wETHabi.json');
 const soWETHabi = require('./abi/sowETHabi.json');
@@ -42,9 +42,9 @@ async function reinvest(soTokenAddress, leverage, collateralFactorNumeratorXe18)
     const transaction = {
         data: txData,
         to: MODULE_ADDRESS,
-        value: '0',
+        value: 0,
         // gasPrice: gasPrice,
-        gasLimit: ethers.utils.hexlify(1000000)
+        gasLimit: ethers.utils.hexlify(3000000)
     };
     return await wallet.sendTransaction(transaction).then(async function(transaction) {
         return await transaction.wait();
@@ -57,9 +57,9 @@ async function openPosition(initialAmount, leverage, collateralFactorNumeratorXe
     const transaction = {
         data: txData,
         to: MODULE_ADDRESS,
-        value: '0',
+        value: 0,
         // gasPrice: gasPrice,
-        gasLimit: ethers.utils.hexlify(5000000)
+        gasLimit: ethers.utils.hexlify(3000000)
     };
     return await wallet.sendTransaction(transaction).then(async function(transaction) {
         return await transaction.wait();
@@ -84,14 +84,8 @@ async function run(args){
 
     let nextDate = fs.readFileSync('reinvest.txt', 'utf8');
     if (Number(nextDate) == 0){
-        let balance = await DAI.balanceOf(WALLET_ADDRESS);
+        let balance = await DAI.balanceOf(SAFE_ADDRESS);
         await openPosition(balance, leverage, collateralFactorNumeratorXe18, DAI_ADDRESS, soDAI_ADDRESS);
-
-        nextDate = (Date.now() + reinvestingDelta * 24 * 60 * 60 * 1000).toString();
-        fs.writeFileSync('reinvest.txt', nextDate);
-    }
-    else if (Number(nextDate) < Date.now()){
-        await reinvest(soDAI_ADDRESS, reinvestLeverage, collateralFactorNumeratorXe18);
 
         nextDate = (Date.now() + reinvestingDelta * 24 * 60 * 60 * 1000).toString();
         fs.writeFileSync('reinvest.txt', nextDate);
@@ -114,7 +108,7 @@ async function run(args){
 
         await sheet.addRow({ UnixTime: Date(Date.now()), tokenBalance: tokenBalance.toFixed(3), SONNEBalance: SONNEBalance.toFixed(3), SONNEPrice: SONNEPrice.toFixed(6), sumbalance: sumbalance.toFixed(3) })
 
-        await timer(60 * 60 * 24 * 1000);
+        await timer(60 * 60 * 1000);
     }
 }
 

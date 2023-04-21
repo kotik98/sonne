@@ -12,10 +12,11 @@ module.exports = {
     compilers: [
       {
         version: "0.8.0",
+        version: "0.8.17",
       },
     ],
   },
-  // defaultNetwork: "optimism",
+  defaultNetwork: "optimism",
   networks: {
     hardhat: {
       forking: {
@@ -23,13 +24,13 @@ module.exports = {
         blockNumber: 83903457
       }
     },
-    // optimism: {
-    //   url: ALCHEMY_OP,
-    //   accounts: [`0x${WALLET_SECRET}`]
-    // },
-    // local: {
-    //   url: 'http://127.0.0.1:8545/',
-    // }
+    optimism: {
+      url: ALCHEMY_OP,
+      accounts: [`0x${WALLET_SECRET}`]
+    },
+    local: {
+      url: 'http://127.0.0.1:8545/',
+    }
   },
   // etherscan: {
   //   apiKey: 'https://optimistic.etherscan.io/'
