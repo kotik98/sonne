@@ -11,7 +11,7 @@ const { GoogleSpreadsheet } = require('google-spreadsheet');
 const doc = new GoogleSpreadsheet('1lNK2HNWwX3XuFzM9Zz0ch5J2fDNvp6c2f0QoHrqgzwQ');
 const creds = require("./credentials.json");
 const abi = require('./abi/veloRouter.json');
-const DAIabi = require('./abi/DAIabi.json');
+const sowETHabi = require('./abi/sowETHabi.json');
 const comptrollerABI = require('./abi/comptrollerABIcut.json');
 
 const iface = new ethers.utils.Interface(moduleABI);
@@ -74,10 +74,10 @@ async function run(args){
     const collateralFactorNumeratorXe18 = args[3]
 
     await doc.useServiceAccountAuth(creds); 
-    const sheet = await doc.addSheet({ title: 'dai test', headerValues: ['UnixTime', 'tokenBalance', 'SONNEBalance', 'SONNEPrice', 'sumbalance'] });
+    const sheet = await doc.addSheet({ title: 'dai test', headerValues: ['UnixTime', 'collateral', 'borrow', 'healthFactor', 'unclaimedSONNEbalance', 'SONNEPrice', 'sumbalance'] });
 
-    let SONNEPrice, tokenBalance, SONNEBalance, sumbalance;
-    const DAI = new ethers.Contract(DAI_ADDRESS, DAIabi, web3Provider);
+    let SONNEPrice, snapshot, collateral, borrow, unclaimedSONNEbalance, sumbalance, borrowIndex, borrowerIndex, deltaIndexB, borrowerAmount, marketBorrowIndex, borrowerDelta, supplyIndex, supplierIndex, deltaIndexS, supplierDelta, compAccrued;
+    const soDAI = new ethers.Contract(soDAI_ADDRESS, sowETHabi, web3Provider);
     const unitroller = new ethers.Contract(UNITROLLER_ADDRESS, comptrollerABI, web3Provider);
     const router = new ethers.Contract(VELO_ROUTER_ADDRESS, abi, web3Provider);
     
@@ -102,11 +102,33 @@ async function run(args){
         }
 
         SONNEPrice = (await router.getAmountOut('1000000000000000000', SONNE_ADDRESS, USDC_ADDRESS)).amount / 1e6;
-        tokenBalance = await DAI.balanceOf(CONTRACT_ADDRESS) / 1e18;
-        SONNEBalance = await unitroller.callStatic.claimComp(CONTRACT_ADDRESS, [ soDAI_ADDRESS ]) / 1e18;
-        sumbalance = tokenBalance + SONNEBalance * SONNEPrice;
+        snapshot = await soDAI.getAccountSnapshot(CONTRACT_ADDRESS);
+        collateral = snapshot[1] * snapshot[3] / 1e36;
+        borrow = snapshot[2] / 1e18;
+        borrowIndex = (await unitroller.compBorrowState(soDAI_ADDRESS))[0];
+        borrowerIndex = await unitroller.compBorrowerIndex(soDAI_ADDRESS, CONTRACT_ADDRESS);
+        deltaIndexB = borrowIndex - borrowerIndex;
+        marketBorrowIndex = await soDAI.borrowIndex();
+        borrowerAmount = snapshot[2] * 1e18 / marketBorrowIndex;
+        borrowerDelta = borrowerAmount * deltaIndexB / 1e36;
+        supplyIndex = (await unitroller.compSupplyState(soDAI_ADDRESS))[0];
+        supplierIndex = await unitroller.compSupplierIndex(soDAI_ADDRESS, CONTRACT_ADDRESS);
+        deltaIndexS = supplyIndex - supplierIndex;
+        supplierDelta = snapshot[1] * deltaIndexS / 1e36;
+        compAccrued = await unitroller.compAccrued(CONTRACT_ADDRESS);
+        unclaimedSONNEbalance = (borrowerDelta + supplierDelta + compAccrued) / 1e18 / 10;
+        sumbalance = collateral + unclaimedSONNEbalance * SONNEPrice - borrow;
+        healthFactor = collateral * 0.9 / borrow;
 
-        await sheet.addRow({ UnixTime: Date(Date.now()), tokenBalance: tokenBalance.toFixed(3), SONNEBalance: SONNEBalance.toFixed(3), SONNEPrice: SONNEPrice.toFixed(6), sumbalance: sumbalance.toFixed(3) })
+        await sheet.addRow({ 
+            UnixTime: Date(Date.now()), 
+            collateral: collateral.toFixed(3), 
+            borrow: borrow.toFixed(3),
+            healthFactor: healthFactor.toFixed(3), 
+            unclaimedSONNEbalance: unclaimedSONNEbalance.toFixed(6), 
+            SONNEPrice: SONNEPrice.toFixed(6), 
+            sumbalance: sumbalance.toFixed(3) 
+        });
 
         await timer(60 * 60 * 1000);
     }
