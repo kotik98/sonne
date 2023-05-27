@@ -15,14 +15,14 @@ const wallet = new ethers.Wallet(WALLET_SECRET, web3Provider)
 
 async function run(){
 
-    const data = posManagerIface.encodeFunctionData('closePosition', [ soDAI_ADDRESS, ethers.BigNumber.from('750000000000000000') ]) 
-    const txData = iface.encodeFunctionData('execTransaction', [ CONTRACT_ADDRESS, '0', data ])
-    const transaction = {
+    let data = posManagerIface.encodeFunctionData('closePosition', [ soDAI_ADDRESS, ethers.BigNumber.from('900000000000000000') ]) 
+    let txData = iface.encodeFunctionData('execTransaction', [ CONTRACT_ADDRESS, '0', data ])
+    let transaction = {
         data: txData,
         to: MODULE_ADDRESS,
-        value: '0',
+        value: 0,
         // gasPrice: gasPrice,
-        gasLimit: ethers.utils.hexlify(5000000)
+        gasLimit: ethers.utils.hexlify(3000000)
     }
     await wallet.sendTransaction(transaction).then(async function(transaction) {
         return await transaction.wait();
@@ -33,9 +33,9 @@ async function run(){
     transaction = {
         data: txData,
         to: MODULE_ADDRESS,
-        value: '0',
+        value: 0,
         // gasPrice: gasPrice,
-        gasLimit: ethers.utils.hexlify(5000000)
+        gasLimit: ethers.utils.hexlify(1000000)
     }
     await wallet.sendTransaction(transaction).then(async function(transaction) {
         return await transaction.wait();

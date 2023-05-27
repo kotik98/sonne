@@ -44,8 +44,9 @@ async function run(){
     deltaIndexS = supplyIndex - supplierIndex;
     supplierDelta = snapshot[1] * deltaIndexS / 1e36;
     compAccrued = await unitroller.compAccrued(CONTRACT_ADDRESS);
-    unclaimedSONNEbalance = (borrowerDelta + supplierDelta + compAccrued) / 1e18;
-    console.log(unclaimedSONNEbalance / 10)
+    unclaimedSONNEbalance = borrowerDelta / 1e18 + supplierDelta / 1e18 + compAccrued / 1e18;
+    // console.log(borrowerDelta / 1e18, supplierDelta / 1e18, compAccrued / 1e18)
+    console.log(unclaimedSONNEbalance)
 }
 
 run()

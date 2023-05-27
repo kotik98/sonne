@@ -81,7 +81,7 @@ contract sonnePositionManager is Ownable {
     }
 
     uint balanceSoToken = _soToken.balanceOf(address(this));
-    _soToken.redeemUnderlying(balanceSoToken);
+    _soToken.redeem(balanceSoToken);
   }
 
   function returnERC20(address tokenAddress) external onlyOwner {

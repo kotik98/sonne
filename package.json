@@ -13,6 +13,7 @@
     "@safe-global/safe-ethers-lib": "^1.9.2",
     "@safe-global/safe-service-client": "^2.0.0",
     "dotenv": "^16.0.3",
-    "google-spreadsheet": "^3.3.0"
+    "google-spreadsheet": "^3.3.0",
+    "node-telegram-log": "^1.1.0"
   }
 }

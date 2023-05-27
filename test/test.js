@@ -99,7 +99,7 @@ describe("sonne position manager", function () {
 
         await contract.connect(owner).listSoToken(DAI.address, soDAI.address);
         await DAI.connect(owner).approve(contract.address, ethers.utils.parseEther('1').toString());
-        await DAI.connect(owner).approve(soDAI.address, ethers.utils.parseEther('1').toString());
+        // await DAI.connect(owner).approve(soDAI.address, ethers.utils.parseEther('1').toString());
         await contract.connect(owner).openPosition(ethers.utils.parseEther('1').toString(), 5, ethers.BigNumber.from('749990000000000000'), DAI.address, soDAI.address);
 
         await DAI.connect(owner).approve(router.address, ethers.utils.parseEther('1').toString());
@@ -172,10 +172,10 @@ describe("sonne position manager", function () {
 
         await contract.connect(owner).listSoToken(DAI.address, soDAI.address);
         await DAI.connect(owner).approve(contract.address, ethers.utils.parseEther('1').toString());
-        await contract.connect(owner).openPosition(ethers.utils.parseEther('1').toString(), 22, ethers.BigNumber.from('899999999000000000'), DAI.address, soDAI.address);
-        // res = await soDAI.connect(owner).getAccountSnapshot(contract.address);
-        // console.log( res[2] / res[1].mul(res[3]) * 1e18 );
-        // console.log(await soWETH.connect(owner).callStatic.borrowBalanceCurrent(contract.address));
+        await contract.connect(owner).openPosition(ethers.utils.parseEther('1').toString(), 13, ethers.BigNumber.from('799900000000000000'), DAI.address, soDAI.address);
+        res = await soDAI.connect(owner).getAccountSnapshot(contract.address);
+        console.log( res[2] / res[1].mul(res[3]) * 1e18 );
+        console.log(await soDAI.connect(owner).callStatic.borrowBalanceCurrent(contract.address));
 
         await expect(await contract.connect(owner).closePosition(soDAI.address, ethers.BigNumber.from('900000000000000000'), { gasLimit: ethers.BigNumber.from('20000000') } )).not.to.be.reverted;
       });

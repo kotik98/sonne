@@ -4,7 +4,6 @@ require("dotenv").config();
 const { ALCHEMY_OP, WALLET_ADDRESS, WALLET_SECRET, CONTRACT_ADDRESS, SONNE_ADDRESS, USDC_ADDRESS, DAI_ADDRESS, UNITROLLER_ADDRESS, VELO_ROUTER_ADDRESS, COMPTROLLER_ADDRESS, soDAI_ADDRESS, MODULE_ADDRESS, SAFE_ADDRESS } = process.env;
 const sonnePosManager = require('./artifacts/contracts/sonnePositionManger.sol/sonnePositionManager.json');
 const WETHabi = require('./abi/wETHabi.json');
-const soWETHabi = require('./abi/sowETHabi.json');
 const { abi: moduleABI } =  require('./abi/WhitelistingModuleV2.json');
 const { abi: posManagerABI } =  require('./abi/sonnePositionManager.json');
 const { GoogleSpreadsheet } = require('google-spreadsheet');
@@ -13,6 +12,12 @@ const creds = require("./credentials.json");
 const abi = require('./abi/veloRouter.json');
 const sowETHabi = require('./abi/sowETHabi.json');
 const comptrollerABI = require('./abi/comptrollerABIcut.json');
+const DAIabi = require('./abi/DAIabi.json');
+const { TelegramLogger } = require("node-telegram-log");
+const logger = new TelegramLogger(
+  "6087708284:AAHv6cLkgaFWLLAx_jE1Ejv5yKrqgt_s4rg",
+  -935614405
+);
 
 const iface = new ethers.utils.Interface(moduleABI);
 const posManagerIface = new ethers.utils.Interface(posManagerABI);
@@ -73,10 +78,13 @@ async function run(args){
     const reinvestLeverage = Number(args[2])
     const collateralFactorNumeratorXe18 = args[3]
 
-    await doc.useServiceAccountAuth(creds); 
-    const sheet = await doc.addSheet({ title: 'dai test', headerValues: ['UnixTime', 'collateral', 'borrow', 'healthFactor', 'unclaimedSONNEbalance', 'SONNEPrice', 'sumbalance'] });
+    await doc.useServiceAccountAuth(creds);
+    await doc.loadInfo();
+    // const sheet = await doc.addSheet({ title: 'dai test', headerValues: ['UnixTime', 'collateral', 'borrow', 'healthFactor', 'unclaimedSONNEbalance', 'SONNEPrice', 'sumbalance'] });
+    const sheet = doc.sheetsByTitle['dai test'];
 
     let SONNEPrice, snapshot, collateral, borrow, unclaimedSONNEbalance, sumbalance, borrowIndex, borrowerIndex, deltaIndexB, borrowerAmount, marketBorrowIndex, borrowerDelta, supplyIndex, supplierIndex, deltaIndexS, supplierDelta, compAccrued;
+    const DAI = new ethers.Contract(DAI_ADDRESS, DAIabi, web3Provider);
     const soDAI = new ethers.Contract(soDAI_ADDRESS, sowETHabi, web3Provider);
     const unitroller = new ethers.Contract(UNITROLLER_ADDRESS, comptrollerABI, web3Provider);
     const router = new ethers.Contract(VELO_ROUTER_ADDRESS, abi, web3Provider);
@@ -89,17 +97,18 @@ async function run(args){
 
         nextDate = (Date.now() + reinvestingDelta * 24 * 60 * 60 * 1000).toString();
         fs.writeFileSync('reinvest.txt', nextDate);
+        let symbol = await DAI.symbol();
+        logger.log(
+            'position opened with ' + (balance/1e18).toString() + ' ' + symbol + '\n' +
+            'with following parameters:\n' +
+            'reinvesting delta: ' + reinvestingDelta.toString() + ' days\n' +
+            'leverage: ' + leverage.toString() + '\n' +
+            'reinvesting leverage: ' + reinvestLeverage.toString() + '\n' +
+            'collateral factor x 1e18: ' + (collateralFactorNumeratorXe18).toString()
+        );
     }
     
     while(true){
-
-        if (Date.now() > Number(nextDate)){
-            await reinvest(soDAI_ADDRESS, reinvestLeverage, collateralFactorNumeratorXe18);
-
-            nextDate = (Date.now() + reinvestingDelta * 24 * 60 * 60 * 1000).toString();
-            fs.writeFileSync('reinvest.txt', nextDate);
-
-        }
 
         SONNEPrice = (await router.getAmountOut('1000000000000000000', SONNE_ADDRESS, USDC_ADDRESS)).amount / 1e6;
         snapshot = await soDAI.getAccountSnapshot(CONTRACT_ADDRESS);
@@ -116,9 +125,21 @@ async function run(args){
         deltaIndexS = supplyIndex - supplierIndex;
         supplierDelta = snapshot[1] * deltaIndexS / 1e36;
         compAccrued = await unitroller.compAccrued(CONTRACT_ADDRESS);
-        unclaimedSONNEbalance = (borrowerDelta + supplierDelta + compAccrued) / 1e18 / 10;
+        unclaimedSONNEbalance = borrowerDelta / 1e18 + supplierDelta / 1e18 + compAccrued / 1e18;
         sumbalance = collateral + unclaimedSONNEbalance * SONNEPrice - borrow;
         healthFactor = collateral * 0.9 / borrow;
+
+        if (healthFactor < 1.0025){
+            logger.error('@MrrMeow', 'be careful, we are close to liquidation', 'healthfactor: ' + healthFactor.toString());
+        }
+
+        if (Date.now() > Number(nextDate)){
+            await reinvest(soDAI_ADDRESS, reinvestLeverage, collateralFactorNumeratorXe18);
+
+            nextDate = (Date.now() + reinvestingDelta * 24 * 60 * 60 * 1000).toString();
+            fs.writeFileSync('reinvest.txt', nextDate);
+            logger.log('reinvested ' + unclaimedSONNEbalance.toString() + ' SONNE, cost ' + (unclaimedSONNEbalance * SONNEPrice).toString() + ' USDC at current price of ' + SONNEPrice.toString());
+        }
 
         await sheet.addRow({ 
             UnixTime: Date(Date.now()), 
@@ -134,4 +155,10 @@ async function run(args){
     }
 }
 
-run(args)
+run(args).catch((error) => {
+    console.error(error);
+    logger.error('@MrrMeow', 'mayday, position manager is down:', error);
+    process.exitCode = 1;
+  });
+
+//   node .\posManager.js 15 22 2 899999999000000000

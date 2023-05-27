@@ -32,18 +32,18 @@ async function safeSetup(){
             if (MODULE_ADDRESS){
 
                 // module enabling
-                let safeTransaction = await safeSdk.createEnableModuleTx(MODULE_ADDRESS)
-                let txHash = await safeSdk.getTransactionHash(safeTransaction)
-                let signature = await safeSdk.signTransactionHash(txHash)
-                safeTransaction.addSignature(signature)
-                await safeService.proposeTransaction({
-                    safeAddress: SAFE_ADDRESS,
-                    /// @ts-ignore
-                    senderAddress: WALLET_ADDRESS,
-                    safeTransactionData: safeTransaction.data,
-                    safeTxHash: txHash,
-                    senderSignature: signature.data
-                });
+                // let safeTransaction = await safeSdk.createEnableModuleTx(MODULE_ADDRESS)
+                // let txHash = await safeSdk.getTransactionHash(safeTransaction)
+                // let signature = await safeSdk.signTransactionHash(txHash)
+                // safeTransaction.addSignature(signature)
+                // await safeService.proposeTransaction({
+                //     safeAddress: SAFE_ADDRESS,
+                //     /// @ts-ignore
+                //     senderAddress: WALLET_ADDRESS,
+                //     safeTransactionData: safeTransaction.data,
+                //     safeTxHash: txHash,
+                //     senderSignature: signature.data
+                // });
 
                 // addNewOperator
                 const iface = new ethers.utils.Interface(module_abi)
@@ -55,18 +55,18 @@ async function safeSetup(){
                     data: data,
                     nonce: nextNonce
                 }
-                safeTransaction = await safeSdk.createTransaction({ safeTransactionData })
-                txHash = await safeSdk.getTransactionHash(safeTransaction)
-                signature = await safeSdk.signTransactionHash(txHash)
-                safeTransaction.addSignature(signature)
-                await safeService.proposeTransaction({
-                    safeAddress: SAFE_ADDRESS,
-                    /// @ts-ignore
-                    senderAddress: WALLET_ADDRESS,
-                    safeTransactionData: safeTransaction.data,
-                    safeTxHash: txHash,
-                    senderSignature: signature.data
-                });
+                // safeTransaction = await safeSdk.createTransaction({ safeTransactionData })
+                // txHash = await safeSdk.getTransactionHash(safeTransaction)
+                // signature = await safeSdk.signTransactionHash(txHash)
+                // safeTransaction.addSignature(signature)
+                // await safeService.proposeTransaction({
+                //     safeAddress: SAFE_ADDRESS,
+                //     /// @ts-ignore
+                //     senderAddress: WALLET_ADDRESS,
+                //     safeTransactionData: safeTransaction.data,
+                //     safeTxHash: txHash,
+                //     senderSignature: signature.data
+                // });
 
                 //approves
                 const erc20iface = new ethers.utils.Interface(daiABI)
@@ -83,9 +83,9 @@ async function safeSetup(){
                     data: data,
                     nonce: nextNonce
                 }
-                safeTransaction = await safeSdk.createTransaction({ safeTransactionData })
-                txHash = await safeSdk.getTransactionHash(safeTransaction)
-                signature = await safeSdk.signTransactionHash(txHash)
+                let safeTransaction = await safeSdk.createTransaction({ safeTransactionData })
+                let txHash = await safeSdk.getTransactionHash(safeTransaction)
+                let signature = await safeSdk.signTransactionHash(txHash)
                 safeTransaction.addSignature(signature)
                 await safeService.proposeTransaction({
                     safeAddress: SAFE_ADDRESS,
@@ -97,31 +97,31 @@ async function safeSetup(){
                 });
 
 
-                data = erc20iface.encodeFunctionData('approve',
-                [  
-                    soDAI_ADDRESS,
-                    ethers.constants.MaxUint256,
-                ])
-                nextNonce = await safeService.getNextNonce(SAFE_ADDRESS)
-                safeTransactionData = {
-                    /// @ts-ignore
-                    to: DAI_ADDRESS,
-                    value: '0',
-                    data: data,
-                    nonce: nextNonce
-                }
-                safeTransaction = await safeSdk.createTransaction({ safeTransactionData })
-                txHash = await safeSdk.getTransactionHash(safeTransaction)
-                signature = await safeSdk.signTransactionHash(txHash)
-                safeTransaction.addSignature(signature)
-                await safeService.proposeTransaction({
-                    safeAddress: SAFE_ADDRESS,
-                    /// @ts-ignore
-                    senderAddress: WALLET_ADDRESS,
-                    safeTransactionData: safeTransaction.data,
-                    safeTxHash: txHash,
-                    senderSignature: signature.data
-                });
+                // data = erc20iface.encodeFunctionData('approve',
+                // [  
+                //     soDAI_ADDRESS,
+                //     ethers.constants.MaxUint256,
+                // ])
+                // nextNonce = await safeService.getNextNonce(SAFE_ADDRESS)
+                // safeTransactionData = {
+                //     /// @ts-ignore
+                //     to: DAI_ADDRESS,
+                //     value: '0',
+                //     data: data,
+                //     nonce: nextNonce
+                // }
+                // safeTransaction = await safeSdk.createTransaction({ safeTransactionData })
+                // txHash = await safeSdk.getTransactionHash(safeTransaction)
+                // signature = await safeSdk.signTransactionHash(txHash)
+                // safeTransaction.addSignature(signature)
+                // await safeService.proposeTransaction({
+                //     safeAddress: SAFE_ADDRESS,
+                //     /// @ts-ignore
+                //     senderAddress: WALLET_ADDRESS,
+                //     safeTransactionData: safeTransaction.data,
+                //     safeTxHash: txHash,
+                //     senderSignature: signature.data
+                // });
 
 
                 // list token
