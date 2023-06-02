@@ -1,5 +1,4 @@
 const { ethers, BigNumber } = require('ethers');
-const fs = require("fs");
 require("dotenv").config();
 const { ALCHEMY_OP, WALLET_ADDRESS, WALLET_SECRET, CONTRACT_ADDRESS, SONNE_ADDRESS, USDC_ADDRESS, DAI_ADDRESS, UNITROLLER_ADDRESS, VELO_ROUTER_ADDRESS, COMPTROLLER_ADDRESS, soDAI_ADDRESS, MODULE_ADDRESS, SAFE_ADDRESS } = process.env;
 const sonnePosManager = require('./artifacts/contracts/sonnePositionManger.sol/sonnePositionManager.json');
@@ -24,6 +23,16 @@ const posManagerIface = new ethers.utils.Interface(posManagerABI);
 const web3Provider = new ethers.providers.StaticJsonRpcProvider(ALCHEMY_OP);
 const wallet = new ethers.Wallet(WALLET_SECRET, web3Provider);
 // const posManager = new ethers.Contract(CONTRACT_ADDRESS, sonnePosManager.abi)
+
+var fs = require('fs');
+var util = require('util');
+var logFile = fs.createWriteStream('log.txt', { flags: 'w' });
+var logStdout = process.stdout;
+console.log = function () {
+  logFile.write(util.format.apply(null, arguments) + '\n');
+  logStdout.write(util.format.apply(null, arguments) + '\n');
+}
+console.error = console.log;
 
 const timer = ms => new Promise(res => setTimeout(res, ms));
 
