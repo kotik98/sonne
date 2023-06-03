@@ -1,7 +1,7 @@
 const { ethers, BigNumber } = require('ethers');
 require("dotenv").config();
 const { ALCHEMY_OP, WALLET_ADDRESS, WALLET_SECRET, CONTRACT_ADDRESS, SONNE_ADDRESS, USDC_ADDRESS, DAI_ADDRESS, UNITROLLER_ADDRESS, VELO_ROUTER_ADDRESS, COMPTROLLER_ADDRESS, soDAI_ADDRESS, MODULE_ADDRESS, SAFE_ADDRESS } = process.env;
-const sonnePosManager = require('./artifacts/contracts/sonnePositionManger.sol/sonnePositionManager.json');
+const sonnePosManager = require('./abi/sonnePositionManager.json');
 const WETHabi = require('./abi/wETHabi.json');
 const { abi: moduleABI } =  require('./abi/WhitelistingModuleV2.json');
 const { abi: posManagerABI } =  require('./abi/sonnePositionManager.json');
