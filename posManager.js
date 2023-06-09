@@ -91,13 +91,13 @@ async function run(args){
     const router = new ethers.Contract(VELO_ROUTER_ADDRESS, abi, web3Provider);
     
 
-    let nextDate = fs.readFileSync('reinvest\client_0.txt', 'utf8');
+    let nextDate = fs.readFileSync('reinvest/client_0.txt', 'utf8');
     if (Number(nextDate) == 0){
         let balance = await DAI.balanceOf(SAFE_ADDRESS_0);
         await openPosition(balance, leverage, collateralFactorNumeratorXe18, DAI_ADDRESS, soDAI_ADDRESS);
 
         nextDate = (Date.now() + reinvestingDelta * 24 * 60 * 60 * 1000).toString();
-        fs.writeFileSync('reinvest\client_0.txt', nextDate);
+        fs.writeFileSync('reinvest/client_0.txt', nextDate);
         let symbol = await DAI.symbol();
         logger.log(
             'position opened with ' + (balance/1e18).toString() + ' ' + symbol + '\n' +
@@ -138,7 +138,7 @@ async function run(args){
             await reinvest(soDAI_ADDRESS, reinvestLeverage, collateralFactorNumeratorXe18);
 
             nextDate = (Date.now() + reinvestingDelta * 24 * 60 * 60 * 1000).toString();
-            fs.writeFileSync('reinvest\client_0.txt', nextDate);
+            fs.writeFileSync('reinvest/client_0.txt', nextDate);
             logger.log('reinvested ' + unclaimedSONNEbalance.toString() + ' SONNE, cost ' + (unclaimedSONNEbalance * SONNEPrice).toString() + ' USDC at current price of ' + SONNEPrice.toString());
         }
 
