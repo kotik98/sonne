@@ -1,12 +1,12 @@
 const { ethers } = require("hardhat")
 require("dotenv").config();
 
-const { SAFE_ADDRESS, COMPTROLLER_ADDRESS, VELO_ROUTER_ADDRESS, UNITROLLER_ADDRESS, SONNE_ADDRESS } = process.env;
+const { SAFE_ADDRESS, COMPTROLLER_ADDRESS, VELO_ROUTER_ADDRESS, UNITROLLER_ADDRESS, SONNE_ADDRESS, SAFE_ADDRESS_0 } = process.env;
 
 async function main() {
-  const posManager = await ethers.getContractFactory("sonnePositionManager");
-  const contract = await posManager.deploy(COMPTROLLER_ADDRESS, VELO_ROUTER_ADDRESS, UNITROLLER_ADDRESS, SONNE_ADDRESS); 
-  await contract.deployed();  
+  const c = await ethers.getContractFactory("WhitelistingModuleV2");
+  const contract = await c.deploy(SAFE_ADDRESS_0); 
+  await contract.deployed();
   console.log("Contract deployed to address: ", contract.address);
 }
 

@@ -1,6 +1,6 @@
 const { ethers, BigNumber } = require('ethers');
 require("dotenv").config();
-const { ALCHEMY_OP, WALLET_ADDRESS, WALLET_SECRET, CLIENT_0, SONNE_ADDRESS, USDC_ADDRESS, DAI_ADDRESS, UNITROLLER_ADDRESS, VELO_ROUTER_ADDRESS, COMPTROLLER_ADDRESS, soDAI_ADDRESS, MODULE_ADDRESS, SAFE_ADDRESS, TG_GROUP_ID, TG_KEY, GOOGLE_SHEET  } = process.env;
+const { ALCHEMY_OP, WALLET_ADDRESS, WALLET_SECRET, CLIENT_0, SONNE_ADDRESS, USDC_ADDRESS, DAI_ADDRESS, UNITROLLER_ADDRESS, VELO_ROUTER_ADDRESS, COMPTROLLER_ADDRESS, soDAI_ADDRESS, MODULE_ADDRESS_0, SAFE_ADDRESS_0, TG_GROUP_ID, TG_KEY, GOOGLE_SHEET  } = process.env;
 const sonnePosManager = require('./abi/sonnePositionManager.json');
 const WETHabi = require('./abi/wETHabi.json');
 const { abi: moduleABI } =  require('./abi/WhitelistingModuleV2.json');
@@ -25,14 +25,6 @@ const wallet = new ethers.Wallet(WALLET_SECRET, web3Provider);
 // const posManager = new ethers.Contract(CLIENT_0, sonnePosManager.abi)
 
 var fs = require('fs');
-var util = require('util');
-var logFile = fs.createWriteStream('log.txt', { flags: 'w' });
-var logStdout = process.stdout;
-console.log = function () {
-  logFile.write(util.format.apply(null, arguments) + '\n');
-  logStdout.write(util.format.apply(null, arguments) + '\n');
-}
-console.error = console.log;
 
 const timer = ms => new Promise(res => setTimeout(res, ms));
 
@@ -55,7 +47,7 @@ async function reinvest(soTokenAddress, leverage, collateralFactorNumeratorXe18)
     const txData = iface.encodeFunctionData('execTransaction', [ CLIENT_0, '0', data ]);
     const transaction = {
         data: txData,
-        to: MODULE_ADDRESS,
+        to: MODULE_ADDRESS_0,
         value: 0,
         // gasPrice: gasPrice,
         gasLimit: ethers.utils.hexlify(3000000)
@@ -70,7 +62,7 @@ async function openPosition(initialAmount, leverage, collateralFactorNumeratorXe
     const txData = iface.encodeFunctionData('execTransaction', [ CLIENT_0, '0', data ]);
     const transaction = {
         data: txData,
-        to: MODULE_ADDRESS,
+        to: MODULE_ADDRESS_0,
         value: 0,
         // gasPrice: gasPrice,
         gasLimit: ethers.utils.hexlify(3000000)
@@ -101,7 +93,7 @@ async function run(args){
 
     let nextDate = fs.readFileSync('reinvest\client_0.txt', 'utf8');
     if (Number(nextDate) == 0){
-        let balance = await DAI.balanceOf(SAFE_ADDRESS);
+        let balance = await DAI.balanceOf(SAFE_ADDRESS_0);
         await openPosition(balance, leverage, collateralFactorNumeratorXe18, DAI_ADDRESS, soDAI_ADDRESS);
 
         nextDate = (Date.now() + reinvestingDelta * 24 * 60 * 60 * 1000).toString();
