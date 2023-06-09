@@ -7,7 +7,7 @@ import { abi as module_abi } from './abi/WhitelistingModuleV2.json'
 import * as daiABI from './abi/DAIabi.json'
 import * as posManagerABI from './abi/sonnePositionManager.json'
 require("dotenv").config();
-const { ALCHEMY_OP, WALLET_ADDRESS, WALLET_SECRET, SAFE_ADDRESS, MODULE_ADDRESS, DAI_ADDRESS, CONTRACT_ADDRESS, VELO_ROUTER_ADDRESS, soDAI_ADDRESS } = process.env;
+const { ALCHEMY_OP, WALLET_ADDRESS, WALLET_SECRET, SAFE_ADDRESS, MODULE_ADDRESS, DAI_ADDRESS, CLIENT_0, VELO_ROUTER_ADDRESS, soDAI_ADDRESS } = process.env;
 
 const web3Provider = new ethers.providers.StaticJsonRpcProvider(ALCHEMY_OP)
 // const web3Provider = new ethers.providers.StaticJsonRpcProvider('http://127.0.0.1:8545/')
@@ -72,7 +72,7 @@ async function safeSetup(){
                 const erc20iface = new ethers.utils.Interface(daiABI)
                 data = erc20iface.encodeFunctionData('approve',
                 [ 
-                    CONTRACT_ADDRESS,
+                    CLIENT_0,
                     ethers.constants.MaxUint256,
                 ])
                 nextNonce = await safeService.getNextNonce(SAFE_ADDRESS)
@@ -97,62 +97,62 @@ async function safeSetup(){
                 });
 
 
-                // data = erc20iface.encodeFunctionData('approve',
-                // [  
-                //     soDAI_ADDRESS,
-                //     ethers.constants.MaxUint256,
-                // ])
-                // nextNonce = await safeService.getNextNonce(SAFE_ADDRESS)
-                // safeTransactionData = {
-                //     /// @ts-ignore
-                //     to: DAI_ADDRESS,
-                //     value: '0',
-                //     data: data,
-                //     nonce: nextNonce
-                // }
-                // safeTransaction = await safeSdk.createTransaction({ safeTransactionData })
-                // txHash = await safeSdk.getTransactionHash(safeTransaction)
-                // signature = await safeSdk.signTransactionHash(txHash)
-                // safeTransaction.addSignature(signature)
-                // await safeService.proposeTransaction({
-                //     safeAddress: SAFE_ADDRESS,
-                //     /// @ts-ignore
-                //     senderAddress: WALLET_ADDRESS,
-                //     safeTransactionData: safeTransaction.data,
-                //     safeTxHash: txHash,
-                //     senderSignature: signature.data
-                // });
+                data = erc20iface.encodeFunctionData('approve',
+                [  
+                    soDAI_ADDRESS,
+                    ethers.constants.MaxUint256,
+                ])
+                nextNonce = await safeService.getNextNonce(SAFE_ADDRESS)
+                safeTransactionData = {
+                    /// @ts-ignore
+                    to: DAI_ADDRESS,
+                    value: '0',
+                    data: data,
+                    nonce: nextNonce
+                }
+                safeTransaction = await safeSdk.createTransaction({ safeTransactionData })
+                txHash = await safeSdk.getTransactionHash(safeTransaction)
+                signature = await safeSdk.signTransactionHash(txHash)
+                safeTransaction.addSignature(signature)
+                await safeService.proposeTransaction({
+                    safeAddress: SAFE_ADDRESS,
+                    /// @ts-ignore
+                    senderAddress: WALLET_ADDRESS,
+                    safeTransactionData: safeTransaction.data,
+                    safeTxHash: txHash,
+                    senderSignature: signature.data
+                });
 
 
                 // list token
-                // const contractIface = new ethers.utils.Interface(posManagerABI.abi)
-                // data = contractIface.encodeFunctionData('listSoToken', [ DAI_ADDRESS, soDAI_ADDRESS ])
-                // nextNonce = await safeService.getNextNonce(SAFE_ADDRESS)
-                // safeTransactionData = {
-                //     /// @ts-ignore
-                //     to: CONTRACT_ADDRESS,
-                //     value: '0',
-                //     data: data,
-                //     nonce: nextNonce
-                // }
-                // safeTransaction = await safeSdk.createTransaction({ safeTransactionData })
-                // txHash = await safeSdk.getTransactionHash(safeTransaction)
-                // signature = await safeSdk.signTransactionHash(txHash)
-                // safeTransaction.addSignature(signature)
-                // await safeService.proposeTransaction({
-                //     safeAddress: SAFE_ADDRESS,
-                //     /// @ts-ignore
-                //     senderAddress: WALLET_ADDRESS,
-                //     safeTransactionData: safeTransaction.data,
-                //     safeTxHash: txHash,
-                //     senderSignature: signature.data
-                // });
+                const contractIface = new ethers.utils.Interface(posManagerABI.abi)
+                data = contractIface.encodeFunctionData('listSoToken', [ DAI_ADDRESS, soDAI_ADDRESS ])
+                nextNonce = await safeService.getNextNonce(SAFE_ADDRESS)
+                safeTransactionData = {
+                    /// @ts-ignore
+                    to: CLIENT_0,
+                    value: '0',
+                    data: data,
+                    nonce: nextNonce
+                }
+                safeTransaction = await safeSdk.createTransaction({ safeTransactionData })
+                txHash = await safeSdk.getTransactionHash(safeTransaction)
+                signature = await safeSdk.signTransactionHash(txHash)
+                safeTransaction.addSignature(signature)
+                await safeService.proposeTransaction({
+                    safeAddress: SAFE_ADDRESS,
+                    /// @ts-ignore
+                    senderAddress: WALLET_ADDRESS,
+                    safeTransactionData: safeTransaction.data,
+                    safeTxHash: txHash,
+                    senderSignature: signature.data
+                });
 
 
                 // allowances:
                 // open position
                 data = iface.encodeFunctionData('addNewAllowance',
-                [  CONTRACT_ADDRESS,
+                [  CLIENT_0,
                    '0x84fbfc5b',
                    {
                        offset: 4 + 12 + 3 * 32,
@@ -185,7 +185,7 @@ async function safeSetup(){
 
                 // reinvest
                 data = iface.encodeFunctionData('addNewAllowance',
-                [  CONTRACT_ADDRESS,
+                [  CLIENT_0,
                    '0x6d49329c',
                    {
                        offset: 4 + 12,
@@ -218,7 +218,7 @@ async function safeSetup(){
 
                 // close position
                 data = iface.encodeFunctionData('addNewAllowance',
-                [  CONTRACT_ADDRESS,
+                [  CLIENT_0,
                    '0x742fe1f8',
                    {
                        offset: 4 + 12,
@@ -251,7 +251,7 @@ async function safeSetup(){
 
                 // returnERC20
                 data = iface.encodeFunctionData('addNewAllowance',
-                [  CONTRACT_ADDRESS,
+                [  CLIENT_0,
                    '0xc7293668',
                    {
                        offset: 4 + 12,

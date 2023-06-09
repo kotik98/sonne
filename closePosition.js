@@ -1,7 +1,7 @@
 const { ethers, BigNumber } = require('ethers');
 const fs = require("fs")
 require("dotenv").config();
-const { ALCHEMY_OP, WALLET_ADDRESS, WALLET_SECRET, CONTRACT_ADDRESS, SONNE_ADDRESS, USDC_ADDRESS, DAI_ADDRESS, UNITROLLER_ADDRESS, VELO_ROUTER_ADDRESS, COMPTROLLER_ADDRESS, soDAI_ADDRESS, MODULE_ADDRESS } = process.env;
+const { ALCHEMY_OP, WALLET_ADDRESS, WALLET_SECRET, CLIENT_0, SONNE_ADDRESS, USDC_ADDRESS, DAI_ADDRESS, UNITROLLER_ADDRESS, VELO_ROUTER_ADDRESS, COMPTROLLER_ADDRESS, soDAI_ADDRESS, MODULE_ADDRESS } = process.env;
 const sonnePosManager = require('./artifacts/contracts/sonnePositionManger.sol/sonnePositionManager.json')
 const WETHabi = require('./abi/wETHabi.json');
 const soWETHabi = require('./abi/sowETHabi.json');
@@ -16,7 +16,7 @@ const wallet = new ethers.Wallet(WALLET_SECRET, web3Provider)
 async function run(){
 
     let data = posManagerIface.encodeFunctionData('closePosition', [ soDAI_ADDRESS, ethers.BigNumber.from('900000000000000000') ]) 
-    let txData = iface.encodeFunctionData('execTransaction', [ CONTRACT_ADDRESS, '0', data ])
+    let txData = iface.encodeFunctionData('execTransaction', [ CLIENT_0, '0', data ])
     let transaction = {
         data: txData,
         to: MODULE_ADDRESS,
@@ -29,7 +29,7 @@ async function run(){
     })
 
     data = posManagerIface.encodeFunctionData('returnERC20', [ DAI_ADDRESS ]) 
-    txData = iface.encodeFunctionData('execTransaction', [ CONTRACT_ADDRESS, '0', data ])
+    txData = iface.encodeFunctionData('execTransaction', [ CLIENT_0, '0', data ])
     transaction = {
         data: txData,
         to: MODULE_ADDRESS,
