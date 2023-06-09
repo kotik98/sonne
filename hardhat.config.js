@@ -16,18 +16,18 @@ module.exports = {
       },
     ],
   },
-  defaultNetwork: "optimism",
+  // defaultNetwork: "optimism",
   networks: {
     hardhat: {
       forking: {
         url: ALCHEMY_OP,
-        blockNumber: 83903457
+        blockNumber: 105366469
       }
     },
-    optimism: {
-      url: ALCHEMY_OP,
-      accounts: [`0x${WALLET_SECRET}`]
-    },
+    // optimism: {
+    //   url: ALCHEMY_OP,
+    //   accounts: [`0x${WALLET_SECRET}`]
+    // },
     local: {
       url: 'http://127.0.0.1:8545/',
     }
