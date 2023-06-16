@@ -5,6 +5,7 @@ coverage.json
 typechain
 typechain-types
 credentials.json
+accounts
 
 # Hardhat files
 cache
