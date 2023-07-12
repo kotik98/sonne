@@ -8,6 +8,8 @@ credentials.json
 accounts
 teset.py
 transferer.py
+balanceFeed.js
+dataTranslator.js
 
 # Hardhat files
 cache
