@@ -6,6 +6,8 @@ typechain
 typechain-types
 credentials.json
 accounts
+teset.py
+transferer.py
 
 # Hardhat files
 cache
